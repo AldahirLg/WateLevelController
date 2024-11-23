@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:water_level_controller/provider/inactiveProvider.dart';
 import 'package:water_level_controller/provider/Tankprovider.dart';
+import 'package:water_level_controller/shared/sharedPreferences.dart';
 import 'package:water_level_controller/views/savedScreen.dart';
 import 'package:water_level_controller/widgets/buildButons.dart';
 import 'package:water_level_controller/widgets/buildTank.dart';
@@ -18,6 +19,18 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
   Color azulClaro = const Color(0xFF30A4BA);
   Color azulObscuro = Color(0xFF134874);
   Color azulMasClaro = Color.fromARGB(255, 190, 247, 255);
+
+  String? ipGet;
+
+  voidGetIpMethod() async {
+    ipGet = await getIp('ip');
+  }
+
+  @override
+  void initState() {
+    voidGetIpMethod();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +121,16 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                     },
                     child: Text('Restaurar App'),
                   ),
+                  Text(
+                    'Informacion',
+                    style: TextStyle(
+                        color: azulClaro, fontWeight: FontWeight.w500),
+                  ),
+                  Text(
+                    'ip: $ipGet',
+                    style: TextStyle(
+                        color: azulClaro, fontWeight: FontWeight.w500),
+                  )
                 ],
               ),
             ),

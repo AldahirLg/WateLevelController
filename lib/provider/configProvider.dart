@@ -44,8 +44,7 @@ class ConfigProvider extends ChangeNotifier {
   void handleResponse(String responseBody) {
     if (responseBody == 'Tinaco') {
       changePageHandle(true);
-      notifyListeners();
-    } else {
+    } else if (responseBody != 'Tinaco') {
       _textTittle = 'Configura el tinaco';
       savedIp('ip', responseBody);
       print(responseBody);
@@ -55,7 +54,6 @@ class ConfigProvider extends ChangeNotifier {
 
   void changePageHandle(bool value) {
     _changePage = value;
-    savedIp('ip', '192.168.100.34');
     notifyListeners();
   }
 
@@ -70,8 +68,8 @@ class ConfigProvider extends ChangeNotifier {
   void updateTextFields() {
     _ssidText = ssidController.text;
     _passText = passwordController.text;
-    print('SSID:$_ssidText');
-    print('PASS:$_passText');
+    //print('SSID:$_ssidText');
+    //print('PASS:$_passText');
     sendRequest(_ipStation, _ssidText, _passText);
     notifyListeners();
   }
