@@ -8,9 +8,13 @@ class BuildTank extends StatelessWidget {
   final double containerHeight;
   final double containerWidth;
   final double porcentaje;
+  final double valueMin;
   final ValueChanged<double> onChanged;
+  final ValueChanged<double> onChangedOff;
   final double valuePercent;
+  final double valuePercentMax;
   final double valueMax;
+  final bool tinacoOrCist;
 
   const BuildTank({
     super.key,
@@ -20,6 +24,10 @@ class BuildTank extends StatelessWidget {
     required this.onChanged,
     required this.valuePercent,
     required this.valueMax,
+    required this.onChangedOff,
+    required this.tinacoOrCist,
+    required this.valueMin,
+    required this.valuePercentMax,
   });
   @override
   Widget build(BuildContext context) {
@@ -37,23 +45,19 @@ class BuildTank extends StatelessWidget {
             progressColor: azulObscuro,
             backgroundColor: azulClaro,
             center: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                BuildSpinBox(
-                  containerHeight: containerHeight,
-                  text: 'level On',
-                  rotate: 1,
-                  valuePercent: valuePercent,
-                  onchaganed: onChanged,
-                  valueMax: valueMax,
-                ),
-                RotatedBox(
-                  quarterTurns: 1,
-                  child: Text(
-                    '${(porcentaje * 100).toStringAsFixed(1)}%',
-                    style: TextStyle(
-                        fontSize: containerHeight * 0.065, color: azulMasClaro),
-                  ),
-                ),
+                Expanded(
+                    child: Center(
+                  child: RotatedBox(
+                      quarterTurns: 1,
+                      child: Text(
+                        'Iniciar: $valuePercent %',
+                        style: TextStyle(
+                            fontSize: containerWidth * 0.045,
+                            color: azulMasClaro),
+                      )),
+                )),
                 Expanded(
                   child: CircularPercentIndicator(
                     radius: containerHeight * 0.14,
@@ -63,6 +67,19 @@ class BuildTank extends StatelessWidget {
                     backgroundColor: Colors.white10,
                   ),
                 ),
+                tinacoOrCist
+                    ? Expanded(
+                        child: Center(
+                        child: RotatedBox(
+                            quarterTurns: 1,
+                            child: Text(
+                              'Detener: $valuePercentMax %',
+                              style: TextStyle(
+                                  fontSize: containerWidth * 0.045,
+                                  color: azulMasClaro),
+                            )),
+                      ))
+                    : const Spacer()
               ],
             )),
       ),

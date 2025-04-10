@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:water_level_controller/provider/inactiveProvider.dart';
 
 class RandomImages extends StatefulWidget {
   const RandomImages({super.key});
