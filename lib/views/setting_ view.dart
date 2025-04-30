@@ -57,7 +57,8 @@ class _SettingViewState extends State<SettingView> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                SpinBoxBuild(
+                spinBoxBuild(
+                  state: tankProvider.iniciar,
                   name: 'Altura del Tinaco (cm)',
                   screenWidth: screenWidth,
                   azulObscuro: azulObscuro,
@@ -72,7 +73,8 @@ class _SettingViewState extends State<SettingView> {
                 ),
 
                 const SizedBox(height: 20),
-                SpinBoxBuild(
+                spinBoxBuild(
+                    state: tankProvider.iniciar,
                     name: 'Iniciar en %',
                     screenWidth: screenWidth,
                     azulObscuro: azulObscuro,
@@ -82,7 +84,8 @@ class _SettingViewState extends State<SettingView> {
                     }),
 
                 const SizedBox(height: 20),
-                SpinBoxBuild(
+                spinBoxBuild(
+                    state: tankProvider.iniciar,
                     name: 'Detener en %',
                     screenWidth: screenWidth,
                     azulObscuro: azulObscuro,
@@ -103,7 +106,8 @@ class _SettingViewState extends State<SettingView> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                SpinBoxBuild(
+                spinBoxBuild(
+                    state: tankProvider.iniciar,
                     name: 'Altura de la Cisterna (cm)',
                     screenWidth: screenWidth,
                     azulObscuro: azulObscuro,
@@ -114,7 +118,8 @@ class _SettingViewState extends State<SettingView> {
                 // Altura de la Cisterna
 
                 const SizedBox(height: 20),
-                SpinBoxBuild(
+                spinBoxBuild(
+                    state: tankProvider.iniciar,
                     name: 'Iniciar en %',
                     screenWidth: screenWidth,
                     azulObscuro: azulObscuro,
@@ -158,12 +163,13 @@ class _SettingViewState extends State<SettingView> {
   }
 }
 
-Widget SpinBoxBuild(
+Widget spinBoxBuild(
     {required String name,
     required final double screenWidth,
     required final Color azulObscuro,
     required final double value,
-    required final ValueChanged<double> onChanged}) {
+    required final ValueChanged<double> onChanged,
+    required final bool state}) {
   return SpinBox(
       decoration: InputDecoration(
         floatingLabelAlignment: FloatingLabelAlignment.center,
@@ -187,9 +193,10 @@ Widget SpinBoxBuild(
         color: azulObscuro,
         fontSize: screenWidth * 0.025,
       ),
+      enabled: state ? false : true,
       step: 5,
       min: 0,
       max: 400,
       value: value,
-      onChanged: onChanged);
+      onSubmitted: onChanged);
 }

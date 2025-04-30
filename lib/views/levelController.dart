@@ -119,13 +119,6 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
       //Future.microtask(() => _showConnectionErrorDialog(context, tankProvider));
     }
 
-    if (tankProvider.alert == 1 && !tankProvider.alertShow) {
-      //Future.microtask(() => alertShow(context, tankProvider));
-      tankProvider.changeAlertShow(true);
-    } else if (tankProvider.alert != 1) {
-      //tankProvider.changeAlertShow(false);
-    }
-
     if (!tankProvider.stateWs) {}
 
     return GestureDetector(
@@ -248,7 +241,6 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(height: screenHeight * 0.03),
-
                         // Botón WiFi
                         _buildResponsiveButton(
                           context,
@@ -258,46 +250,7 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                               Navigator.pushNamed(context, '/config'),
                           screenSize: Size(screenWidth, screenHeight),
                         ),
-
-                        SizedBox(height: screenHeight * 0.02),
-
-                        // Botón Conectar
-                        /*_buildResponsiveButton(
-                          context,
-                          icon: Icons.cast_connected,
-                          label: 'Conectar',
-                          onPressed: () {
-                            _timer?.cancel();
-                            //tankProvider.setStateWS(false);
-                            //tankProvider.discoverESP32();
-                          },
-                          screenSize: Size(screenWidth, screenHeight),
-                        ),*/
-                        /*_buildResponsiveButton(
-                          context,
-                          icon: Icons.cast_connected,
-                          label: 'Cerrar',
-                          onPressed: () {
-                            //tankProvider.setStateWS(true);
-                            tankProvider.closeConnectionToServer();
-                          },
-                          screenSize: Size(screenWidth, screenHeight),
-                        ),
-
-                        SizedBox(height: screenHeight * 0.02),
-
-                        // Botón Configuración
-                        _buildResponsiveButton(
-                          context,
-                          icon: Icons.settings,
-                          label: 'Configuración',
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/setting'),
-                          screenSize: Size(screenWidth, screenHeight),
-                        ),*/
-
-                        SizedBox(height: screenHeight * 0.02),
-
+                        SizedBox(height: screenHeight * 0.04),
                         // Botón Restaurar
                         _buildResponsiveButton(
                           context,
@@ -306,25 +259,6 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                           onPressed: () => confirmRemove(context, tankProvider),
                           screenSize: Size(screenWidth, screenHeight),
                         ),
-
-                        //SizedBox(height: screenHeight * 0.04),
-
-                        // Indicador de conexión
-                        /*tankProvider.stateWs
-                            ? Container(
-                                width: screenWidth * 0.7,
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth * 0.05),
-                                child: Text(
-                                  tankProvider.indicator,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: screenWidth * 0.035,
-                                    color: azulObscuro,
-                                  ),
-                                ),
-                              )
-                            : CircularProgressIndicator(color: azulClaro),*/
                       ],
                     ),
                   ),
@@ -349,23 +283,11 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                       height: MediaQuery.of(context).size.height,
                       child: Column(
                         children: [_containerCentral(tankProvider)],
-                      )
-
-                      /*IndexedStack(
-                  index: tankProvider.inde,
-                  children: [
-                    Column(children: [_containerCentral(tankProvider)]),
-                    Container(
-                      color: azulClaro,
-                      child: RandomImages(),
-                    )
-                  ],
-                ),*/
-                      ),
+                      )),
                 ),
               ),
             ),
-            SizedBox.expand(child: confValueSistem(tankProvider))
+            SizedBox.expand(child: confValueSystem(tankProvider))
           ][currentPage]),
     );
   }
@@ -441,6 +363,8 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                 child: Padding(
                   padding: const EdgeInsets.all(0.8),
                   child: BuildButtons(
+                    alerState: tankProvider.alert,
+                    stateTinaco: tankProvider.espTinaco,
                     stateRele: tankProvider.rele,
                     tank: 'Tinaco',
                     containerHeigth: containerHeight,
@@ -462,15 +386,23 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
     ));
   }
 
-  Widget confValueSistem(TankProvider tankProvider) {
+  ScaffoldFeatureController<SnackBar, SnackBarClosedReason> snackBarShow() {
+    return ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: azulObscuro,
+        content: const Text('No esta conectado'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Widget confValueSystem(TankProvider tankProvider) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.height;
     return SingleChildScrollView(
       child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
-            //mainAxisAlignment: MainAxisAlignment.center,
-            //crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Título Tinaco
               Text(
@@ -482,22 +414,20 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                 ),
               ),
               const SizedBox(height: 10),
-              SpinBoxBuild(
-                name: 'Altura del Tinaco (cm)',
-                screenWidth: screenWidth,
-                azulObscuro: azulObscuro,
-                value: tankProvider.alturaTinaco,
-                onChanged: (value) {
-                  //if (!tankProvider.channel) {
-                  tankProvider.heightTin(value);
-                  //} else {
-                  print('Canal Cerrado');
-                  // }
-                },
-              ),
+              spinBoxBuild(
+                  state: tankProvider.iniciar,
+                  name: 'Altura del Tinaco (cm)',
+                  screenWidth: screenWidth,
+                  azulObscuro: azulObscuro,
+                  value: tankProvider.alturaTinaco,
+                  onChanged: (value) {
+                    tankProvider.heightTin(value);
+                    print('Canal Cerrado');
+                  }),
 
               const SizedBox(height: 20),
-              SpinBoxBuild(
+              spinBoxBuild(
+                  state: tankProvider.iniciar,
                   name: 'Iniciar en %',
                   screenWidth: screenWidth,
                   azulObscuro: azulObscuro,
@@ -507,7 +437,8 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                   }),
 
               const SizedBox(height: 20),
-              SpinBoxBuild(
+              spinBoxBuild(
+                  state: tankProvider.iniciar,
                   name: 'Detener en %',
                   screenWidth: screenWidth,
                   azulObscuro: azulObscuro,
@@ -528,7 +459,8 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                 ),
               ),
               const SizedBox(height: 10),
-              SpinBoxBuild(
+              spinBoxBuild(
+                  state: tankProvider.iniciar,
                   name: 'Altura de la Cisterna (cm)',
                   screenWidth: screenWidth,
                   azulObscuro: azulObscuro,
@@ -539,7 +471,8 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
               // Altura de la Cisterna
 
               const SizedBox(height: 20),
-              SpinBoxBuild(
+              spinBoxBuild(
+                  state: tankProvider.iniciar,
                   name: 'Iniciar en %',
                   screenWidth: screenWidth,
                   azulObscuro: azulObscuro,
@@ -548,11 +481,8 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                     tankProvider.limMinC(value);
                   }),
               // Iniciar en % (Cisterna)
-
               const SizedBox(height: 20),
-
               // Título Iniciar Proceso
-
               SizedBox(
                 height:
                     MediaQuery.of(context).orientation == Orientation.portrait
@@ -605,6 +535,8 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                 child: Padding(
                   padding: const EdgeInsets.all(0.8),
                   child: BuildButtons(
+                    alerState: tankProvider.alert,
+                    stateTinaco: tankProvider.espTinaco,
                     stateRele: tankProvider.rele,
                     tank: 'Cisterna',
                     containerHeigth: containerHeight,
@@ -728,7 +660,6 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
               TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    provider.alertState(0);
                   },
                   child: Text(
                     'Desactivar',
@@ -761,7 +692,8 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
             borderRadius: BorderRadius.circular(screenSize.width * 0.03),
           ),
         ),
-        onPressed: onPressed,
+        onLongPress: onPressed,
+        onPressed: null,
         icon: Icon(icon, size: screenSize.width * 0.06),
         label: Text(
           label,

@@ -29,6 +29,7 @@ class TankProvider extends ChangeNotifier {
   Timer? _inactiveTimer;
   bool _alertShow = false;
   String _indicator = 'Desconectado';
+  bool _savedStateTinaco = false;
 
   //bool get channel => _channel?.sink != null;
 
@@ -49,6 +50,8 @@ class TankProvider extends ChangeNotifier {
   bool get alertShow => _alertShow;
   double get limMinCisterna => _limMinCisterna;
   String get indicator => _indicator;
+  bool get savedStateTinaco => _savedStateTinaco;
+
   TankProvider() {
     //connectToWS();
     //starInactive();
@@ -267,13 +270,16 @@ class TankProvider extends ChangeNotifier {
       // Asignar valores booleanos
       _iniciar = parsedMessage['start'] as bool? ?? false;
       _rele = parsedMessage['bomba'] as bool? ?? false;
-      _espTinaco = parsedMessage['esp32Tinaco'] as bool? ?? false;
+      _espTinaco = parsedMessage['statetinaco'] as bool? ?? false;
       _alert = parsedMessage['alert'] as bool? ?? false;
 
       // Actualizar el estado del switch
       _isSwitchOn = !_iniciar;
 
+      if (alert) {}
+
       // Notificar a los listeners
+
       notifyListeners();
     } catch (e) {
       print('Error al procesar el mensaje: $e');
@@ -318,6 +324,7 @@ class TankProvider extends ChangeNotifier {
   void startApp(bool value) {
     _iniciar = value;
     sendMessage(jsonEncode({'start': _iniciar}));
+    sendMessage(jsonEncode({'alert': false}));
     print('Iniciar:$_iniciar');
     notifyListeners();
   }
@@ -359,9 +366,9 @@ class TankProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void alertState(int value) {
+  void alertState(bool value) {
     print(value);
-    sendMessage(jsonEncode({'Advertencia': value}));
+    sendMessage(jsonEncode({'alert': value}));
     notifyListeners();
   }
 

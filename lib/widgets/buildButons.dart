@@ -10,17 +10,20 @@ class BuildButtons extends StatelessWidget {
 
   final double valuemax;
   final bool stateRele;
+  final bool stateTinaco;
+  final bool alerState;
 
-  const BuildButtons({
-    super.key,
-    required this.tank,
-    required this.containerHeigth,
-    required this.onChanged,
-    required this.valuePercent,
-    required this.valuemax,
-    required this.porcentaje,
-    required this.stateRele,
-  });
+  const BuildButtons(
+      {super.key,
+      required this.tank,
+      required this.containerHeigth,
+      required this.onChanged,
+      required this.valuePercent,
+      required this.valuemax,
+      required this.porcentaje,
+      required this.stateRele,
+      required this.stateTinaco,
+      required this.alerState});
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +34,34 @@ class BuildButtons extends StatelessWidget {
       children: [
         Expanded(
           flex: 1,
-          child: Text(tank,
-              style: TextStyle(
-                  fontSize: containerHeigth * 0.08, color: azulObscuro)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(tank,
+                  style: TextStyle(
+                      fontSize: containerHeigth * 0.07, color: azulObscuro)),
+              tank == 'Tinaco'
+                  ? IconButton(
+                      onPressed: () {
+                        if (stateTinaco) {
+                          return;
+                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: azulObscuro,
+                            content:
+                                const Text('No hay conexion con el Tinaco'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      icon: Icon(stateTinaco
+                          ? Icons.cloud_outlined
+                          : Icons.cloud_off_outlined),
+                    )
+                  : const Text('')
+            ],
+          ),
         ),
         Expanded(
             flex: 1,
@@ -45,9 +73,50 @@ class BuildButtons extends StatelessWidget {
                   style: TextStyle(
                       fontSize: containerHeight * 0.3, color: azulClaro));
             })),
-        RotatingFan(
-          isActive: stateRele,
-        ),
+        alerState
+            ? Expanded(
+                flex: 2,
+                child: LayoutBuilder(builder: (context, constraints) {
+                  double maxHeight = constraints.maxHeight;
+                  double maxWidth = constraints.maxHeight;
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Alerta!!',
+                        maxLines: 2,
+                        style: TextStyle(
+                            fontSize: maxWidth * 0.1, color: azulObscuro),
+                      ),
+                      Text(
+                        'Haz click en el Icono',
+                        style: TextStyle(
+                            fontSize: maxWidth * 0.1, color: azulObscuro),
+                      ),
+                      IconButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                backgroundColor: azulObscuro,
+                                content: const Text(
+                                    'No esta subiendo el agua revisa tu bomba y el manual',
+                                    maxLines: 2),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          icon: Icon(
+                            Icons.warning,
+                            size: maxWidth * 0.2,
+                            color: azulObscuro,
+                          ))
+                    ],
+                  );
+                }),
+              )
+            : RotatingFan(
+                isActive: stateRele,
+              ),
         Expanded(
           flex: 2,
           child: LayoutBuilder(
@@ -57,12 +126,13 @@ class BuildButtons extends StatelessWidget {
             return Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Altura(cm)',
+                Text('BOMBA',
                     style: TextStyle(
                         fontSize: containerHeight * 0.1, color: azulClaro)),
-                Text('$valuePercent',
+                Text(stateRele ? 'O N' : 'O F F',
                     style: TextStyle(
-                        fontSize: containerHeight * 0.1, color: azulClaro))
+                        fontSize: containerHeight * 0.1,
+                        color: stateRele ? azulObscuro : azulClaro))
               ],
             );
           }),
