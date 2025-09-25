@@ -43,40 +43,53 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
   Future<void> _handleRefresh(TankProvider provider) async {
     _refreshIndicatorKey.currentState?.show();
 
-    bool conectado = false;
+    ConnectionStatus status;
 
     if (provider.isSocketConnected()) {
       print('Conexión WebSocket abierta - Enviando estado');
       try {
-        // Verificar nuevamente si la conexión está abierta antes de enviar
-        if (provider.isSocketConnected()) {
-          updateState(provider);
-          conectado = true;
-        } else {
-          print('Conexión cerrada antes de enviar el mensaje');
-        }
+        updateState(provider);
+        status = ConnectionStatus.connected;
       } catch (e) {
         print('Error al enviar mensaje: $e');
+        status = ConnectionStatus.error;
       }
     } else {
       print('Intentando conectar...');
-      conectado = await provider.connectClientDNS();
+      status = await provider.connectClientDNS();
 
-      // Si la conexión se estableció correctamente, enviar el estado
-      if (conectado) {
+      if (status == ConnectionStatus.connected) {
         try {
           updateState(provider);
         } catch (e) {
           print('Error al enviar mensaje después de conectar: $e');
+          status = ConnectionStatus.error;
         }
       }
     }
 
+    // Mostrar mensaje según el estado
+    String mensaje;
+    switch (status) {
+      case ConnectionStatus.connected:
+        mensaje = 'Conexión exitosa al dispositivo';
+        break;
+      case ConnectionStatus.notFound:
+        mensaje = 'Dispositivo no encontrado en la red';
+        break;
+      case ConnectionStatus.unreachable:
+        mensaje =
+            'Dispositivo encontrado pero sin espacio para nuevas conexiones, desconecte un dipositvo conectado anteriormente ';
+        break;
+      case ConnectionStatus.error:
+      default:
+        mensaje = 'Error al intentar conectar al dispositivo';
+        break;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(conectado
-            ? 'Conexión exitosa al dispositivo'
-            : 'No se pudo conectar'),
+        content: Text(mensaje),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -88,6 +101,7 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
     }
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!provider.isSocketConnected()) return;
       provider.sendMessage(jsonEncode({'state': true}));
     });
   }
@@ -257,6 +271,15 @@ class _WaterLevelControllerState extends State<WaterLevelController> {
                           icon: Icons.restore,
                           label: 'Restaurar',
                           onPressed: () => confirmRemove(context, tankProvider),
+                          screenSize: Size(screenWidth, screenHeight),
+                        ),
+                        SizedBox(height: screenHeight * 0.04),
+
+                        _buildResponsiveButton(
+                          context,
+                          icon: Icons.restore,
+                          label: 'Borrar IP',
+                          onPressed: () => removeSavedIp(),
                           screenSize: Size(screenWidth, screenHeight),
                         ),
                       ],

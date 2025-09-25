@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,6 +37,46 @@ class ConfigProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> sendRequestTinaco(String ssid, String pass) async {
+    if (ssid.isEmpty || pass.isEmpty) {
+      //print('SSID, password or MAC address cannot be empty');
+      return;
+    }
+
+    String? mac = await getSavedMac();
+    if (mac == null || mac.isEmpty) {
+      //print('MAC address cannot be empty');
+      return;
+    }
+
+    try {
+      final response = await post(
+        Uri.parse(_ipStation),
+        body: {"SSID": ssid, "PASS": pass, "MAC": mac},
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        _messageConnection = 'Configurado Correctamente';
+        _succesConnection = true;
+        print(response.body);
+      } else if (response.statusCode == 400) {
+        _messageConnection = response.body;
+        _succesConnection = true;
+        print('Error: ${response.statusCode}');
+      } else if (response.statusCode == 500) {
+        _messageConnection = response.body;
+        _succesConnection = true;
+      }
+
+      notifyListeners();
+    } catch (e) {
+      _succesConnection = true;
+      _messageConnection = 'Dispositivo No Encontrado';
+      print('Request error: $e');
+      notifyListeners();
+    }
+  }
+
   Future<void> sendRequest(String ssid, String pass) async {
     if (ssid.isEmpty || pass.isEmpty) {
       //print('SSID or password cannot be empty');
@@ -51,6 +92,9 @@ class ConfigProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         _messageConnection = 'Configurado Correctamente';
         _succesConnection = true;
+        Map<String, dynamic> jsonData = jsonDecode(response.body);
+        savedIp('ip', jsonData['ip']);
+        savedMac('mac', jsonData['mac']);
         print(response.body);
       } else if (response.statusCode == 400) {
         _messageConnection = response.body;

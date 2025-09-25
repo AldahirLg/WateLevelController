@@ -114,6 +114,18 @@ class _ConfigViewState extends State<ConfigView> {
         Map<String, String?> credentials = await provider.getSavedWiFi();
         print(credentials['ssid']);
         print(credentials['pass']);
+
+        if (ssid == 'WiFi-Tinaco') {
+          await provider
+              .sendRequestTinaco(credentials['ssid'].toString(),
+                  credentials['pass'].toString())
+              .timeout(const Duration(seconds: 15));
+          debugPrint('Crdenciales enviadas Correctamente');
+          await Future.delayed(const Duration(seconds: 5));
+          await WiFiForIoTPlugin.disconnect();
+          debugPrint('Conexion Wifi Cerrada');
+          return;
+        }
         await provider
             .sendRequest(
                 credentials['ssid'].toString(), credentials['pass'].toString())

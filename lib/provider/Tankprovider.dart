@@ -7,6 +7,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:water_level_controller/shared/sharedPreferences.dart';
 import 'package:web_socket_client/web_socket_client.dart';
 
+enum ConnectionStatus {
+  connected,
+  notFound,
+  unreachable, // encontrado por mDNS pero sin conexión WebSocket
+  error,
+}
+
 class TankProvider extends ChangeNotifier {
   bool _isSwitchOn = false;
   bool _stateWs = true;
@@ -67,37 +74,37 @@ class TankProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> connectClientDNS() async {
-    final completer = Completer<bool>();
-
+  Future<ConnectionStatus> connectClientDNS() async {
     try {
       String? getIpSaved = await getIp('ip');
+
+      if (getIpSaved == null) {
+        await discoverESP32();
+        getIpSaved = await getIp('ip');
+        if (getIpSaved == null) return ConnectionStatus.notFound;
+      }
+
       final uri = Uri.parse('ws://$getIpSaved:81');
       _socket = WebSocket(uri, backoff: backoff);
 
+      final completer = Completer<ConnectionStatus>();
       bool connected = false;
 
-      // Timeout de conexión
       Future.delayed(const Duration(seconds: 5), () async {
         if (!connected && !completer.isCompleted) {
-          print('Tiempo agotado, ejecutando discoverESP32...');
-          await discoverESP32(); // Espera a que termine
-          completer.complete(false);
+          completer.complete(ConnectionStatus.unreachable);
         }
       });
 
-      _socket?.connection.listen((state) async {
+      _socket?.connection.listen((state) {
         if (state is Connected || state is Reconnected) {
-          print('Conectado exitosamente');
           connected = true;
-          if (!completer.isCompleted) completer.complete(true);
+          if (!completer.isCompleted)
+            completer.complete(ConnectionStatus.connected);
         }
       }, onError: (error) async {
         print('Error de conexión: $error');
-        if (!completer.isCompleted) {
-          await discoverESP32();
-          completer.complete(false);
-        }
+        completer.complete(ConnectionStatus.unreachable);
       });
 
       _socket?.messages.listen((message) {
@@ -106,9 +113,8 @@ class TankProvider extends ChangeNotifier {
 
       return completer.future;
     } catch (e) {
-      print('Excepción durante conexión: $e');
-      await discoverESP32();
-      return false;
+      print('Excepción en conexión: $e');
+      return ConnectionStatus.error;
     }
   }
 
@@ -155,30 +161,34 @@ class TankProvider extends ChangeNotifier {
 
   Future<void> discoverESP32() async {
     setStateWS(false);
+    int attempts = 0;
+    int maxAttempts = 4;
+    String macAddress = await getMac('mac') ?? '';
 
     try {
-      print('Iniciando configuración de network_tools_flutter...');
-      await configureNetworkToolsFlutter(
-          (await getApplicationDocumentsDirectory()).path);
-      print('Configuración de network_tools_flutter completada.');
+      while (attempts < maxAttempts) {
+        print('Iniciando configuración de network_tools_flutter...');
+        await configureNetworkToolsFlutter(
+            (await getApplicationDocumentsDirectory()).path);
+        print('Configuración de network_tools_flutter completada.');
 
-      print('Iniciando búsqueda de dispositivos mDNS...');
-      final devices = await MdnsScannerService.instance.searchMdnsDevices();
-      print('Dispositivos encontrados: ${devices.length}');
+        print('Iniciando búsqueda de dispositivos mDNS...');
+        final devices = await MdnsScannerService.instance.searchMdnsDevices();
+        print('Dispositivos encontrados: ${devices.length}');
 
-      for (final ActiveHost activeHost in devices) {
-        //print('Analizando dispositivo: ${activeHost.address}');
-        final MdnsInfo? mdnsInfo = await activeHost.mdnsInfo;
+        for (final ActiveHost activeHost in devices) {
+          //print('Analizando dispositivo: ${activeHost.address}');
+          final MdnsInfo? mdnsInfo = await activeHost.mdnsInfo;
 
-        if (mdnsInfo != null) {
-          /*print('Información mDNS del dispositivo:');
+          if (mdnsInfo != null) {
+            /*print('Información mDNS del dispositivo:');
           print('  - Nombre: ${mdnsInfo.getOnlyTheStartOfMdnsName()}');
           print('  - Puerto: ${mdnsInfo.mdnsPort}');
           print('  - Tipo de servicio: ${mdnsInfo.mdnsServiceType}');*/
 
-          // Verificar si el dispositivo es el ESP32
-          if (mdnsInfo.getOnlyTheStartOfMdnsName() == 'cisterna') {
-            print('''
+            // Verificar si el dispositivo es el ESP32
+            if (mdnsInfo.getOnlyTheStartOfMdnsName() == 'cisterna$macAddress') {
+              print('''
           Dispositivo ESP32 encontrado:
           Address: ${activeHost.address}
           Port: ${mdnsInfo.mdnsPort}
@@ -186,36 +196,34 @@ class TankProvider extends ChangeNotifier {
           MdnsName: ${mdnsInfo.getOnlyTheStartOfMdnsName()}
           ''');
 
-            // Guardar la dirección IP del ESP32
+              // Guardar la dirección IP del ESP32
 
-            // Conectar al WebSocket del ESP32
-            //connectToWS(activeHost.address);
-            savedIp('ip', activeHost.address);
-            connectClientDNS();
-            setStateWS(true);
-            _indicator = 'Conectado';
+              // Conectar al WebSocket del ESP32
+              //connectToWS(activeHost.address);
 
-            return; // Salir del bucle una vez encontrado el ESP32
-          } else {
-            print('No se encontro Cisterna');
-            setStateWS(true);
-            _indicator = 'No se encontro';
+              savedIp('ip', activeHost.address);
+              connectClientDNS();
+              //print('SI SE ENCONTRO');
+              setStateWS(true);
+              _indicator = 'Conectado';
+              notifyListeners();
+              return; // Salir del bucle una vez encontrado el ESP32
+            }
           }
-        } else {
-          print('No se pudo obtener la información mDNS del dispositivo.');
-          setStateWS(true);
-          _indicator = 'Fallor la busqueda';
+        }
+        attempts++;
+        if (attempts < maxAttempts) {
+          print(
+              'Esperando 1 segundos antes del proximo intento num : $attempts');
+          await Future.delayed(const Duration(seconds: 1));
         }
       }
-
-      /*if (_esp32Address == null) {
-      print('No se encontró ningún dispositivo ESP32 en la red.');
-    }*/
+      setStateWS(true);
+      _indicator = 'No se encontro';
     } catch (e) {
       print('Error durante el descubrimiento mDNS: $e');
       setStateWS(true);
     }
-    //notifyListeners();
   }
 
   //metodo para conexion al servidor

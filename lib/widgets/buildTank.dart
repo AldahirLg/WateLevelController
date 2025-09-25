@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_progress_indicator_v2/liquid_progress_indicator.dart';
 
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
@@ -35,29 +36,33 @@ class BuildTank extends StatelessWidget {
     Color azulObscuro = const Color(0xFF134874);
     Color azulMasClaro = const Color.fromARGB(255, 190, 247, 255);
     return Expanded(
-      child: RotatedBox(
-        quarterTurns: 3,
-        child: LinearPercentIndicator(
-            barRadius: const Radius.circular(10),
-            width: containerHeight * 0.99,
-            lineHeight: containerWidth * 0.4,
-            percent: porcentaje,
-            progressColor: azulObscuro,
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: ClipRRect(
+          borderRadius:
+              BorderRadius.circular(20.0), // Ajusta el valor para el redondeo
+          child: LiquidLinearProgressIndicator(
+            value: porcentaje,
+            valueColor: AlwaysStoppedAnimation(azulObscuro),
             backgroundColor: azulClaro,
-            center: Row(
+            direction: Axis.vertical,
+            borderRadius: 20.0,
+            borderWidth: 1.0,
+            borderColor: azulClaro,
+            center: Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Expanded(
-                    child: Center(
-                  child: RotatedBox(
-                      quarterTurns: 1,
-                      child: Text(
-                        'Iniciar: $valuePercent %',
-                        style: TextStyle(
-                            fontSize: containerWidth * 0.045,
-                            color: azulMasClaro),
-                      )),
-                )),
+                  child: Center(
+                    child: Text(
+                      'Iniciar: $valuePercent %',
+                      style: TextStyle(
+                        fontSize: containerWidth * 0.045,
+                        color: azulMasClaro,
+                      ),
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: CircularPercentIndicator(
                     radius: containerHeight * 0.14,
@@ -70,19 +75,22 @@ class BuildTank extends StatelessWidget {
                 tinacoOrCist
                     ? Expanded(
                         child: Center(
-                        child: RotatedBox(
-                            quarterTurns: 1,
-                            child: Text(
-                              'Detener: $valuePercentMax %',
-                              style: TextStyle(
-                                  fontSize: containerWidth * 0.045,
-                                  color: azulMasClaro),
-                            )),
-                      ))
-                    : const Spacer()
+                          child: Text(
+                            'Detener: $valuePercentMax %',
+                            style: TextStyle(
+                              fontSize: containerWidth * 0.045,
+                              color: azulMasClaro,
+                            ),
+                          ),
+                        ),
+                      )
+                    : const Spacer(),
               ],
-            )),
+            ),
+          ),
+        ),
       ),
     );
+    //);
   }
 }

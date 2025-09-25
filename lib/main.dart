@@ -6,6 +6,7 @@ import 'package:water_level_controller/views/config.dart';
 import 'package:water_level_controller/views/levelController.dart';
 import 'package:provider/provider.dart';
 import 'package:water_level_controller/views/setting_%20view.dart';
+import 'package:water_level_controller/views/animation_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,7 +29,8 @@ class MyApp extends StatelessWidget {
         routes: {
           '/': (context) => const WaterLevelController(),
           '/config': (context) => const ConfigView(),
-          '/setting': (context) => const SettingView()
+          '/setting': (context) => const SettingView(),
+          '/prueba': (context) => const PruebaView(),
         },
       ),
     );
